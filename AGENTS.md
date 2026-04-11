@@ -135,6 +135,10 @@ These share a largely identical mapping from `tool_use.name` to a short summary 
 
 If you want to de-duplicate in the future, prefer extracting a **shared structured summary** helper (e.g. `{ title: string; detail?: string }`) and have each renderer format it for its own output, keeping `todo_write` special-cased in the TUI.
 
+## Code Convention
+
+Load the [Code Convention](./docs/code-convention.md) for more details.
+
 ## Quality gate
 
 Run `bun run check` as the main gate (`tsc --noEmit`, ESLint, and `bun test`). Use `bun run check:types` for type-check-only validation. The pre-commit hook (`.githooks/pre-commit`, install with `bun run hooks:install`) and GitHub Actions (`.github/workflows/check.yml`) both run this same command. Use `bun test` alone when iterating on tests (see **Testing**).

@@ -56,6 +56,12 @@ function toolUseText(content: ToolUseContent): string {
       return `${dim("⏺")} ${content.input.description as string}\n  ${dim(`└─ ${content.input.path as string}`)}`;
     case "todo_write":
       return `${dim("⏺")} Working on todos`;
+    case "ask_user_question": {
+      const qs = (content.input as { questions?: { header?: string }[] }).questions;
+      const n = qs?.length ?? 0;
+      const first = qs?.[0]?.header;
+      return `${dim("⏺")} Ask user${n ? `: ${n} question(s)` : ""}${first ? dim(`\n  └─ ${first}`) : ""}`;
+    }
     case "list_files":
       return `${dim("⏺")} ${content.input.description as string}\n  ${dim(`└─ ${content.input.path as string}`)}`;
     case "glob_search":

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { globalApprovalManager, type ApprovalRequest } from "@/agent/approval";
+import { globalApprovalManager, type ApprovalDecision, type ApprovalRequest } from "@/coding";
 
 export function useApprovalManager() {
   const [request, setRequest] = useState<ApprovalRequest | null>(null);
@@ -12,11 +12,9 @@ export function useApprovalManager() {
     });
   }, []);
 
-  const respond = (approved: boolean) => {
+  const respond = (decision: ApprovalDecision) => {
     if (request) {
-      // globalApprovalManager will handle resolving and popping the next item.
-      // It will trigger the subscribe callback with the next item (or null).
-      globalApprovalManager.respond(approved);
+      globalApprovalManager.respond(decision);
     }
   };
 

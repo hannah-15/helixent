@@ -3,12 +3,14 @@ import { join } from "node:path";
 import { Command } from "commander";
 import { render } from "ink";
 
-import { globalApprovalManager } from "@/agent/approval";
 import { validateIntegrity } from "@/cli/bootstrap";
 import { registerCommands } from "@/cli/commands";
 import { loadConfig } from "@/cli/config";
-import { createCodingAgent } from "@/coding";
+import { SettingsLoader, SettingsWriter } from "@/cli/settings";
+import { createCodingAgent, globalApprovalManager, globalAskUserQuestionManager } from "@/coding";
+import { AnthropicModelProvider } from "@/community/anthropic";
 import { OpenAIModelProvider } from "@/community/openai";
+import type { ModelProvider } from "@/foundation";
 import { Model } from "@/foundation";
 
 import { App } from "./tui";
@@ -39,10 +41,18 @@ if (args.length > 0) {
     throw new Error("No models configured. Run `helixent config model add` to add one.");
   }
 
-  const provider = new OpenAIModelProvider({
-    baseURL: entry.baseURL,
-    apiKey: entry.APIKey,
-  });
+  let provider: ModelProvider;
+  if (entry.provider === "anthropic") {
+    provider = new AnthropicModelProvider({
+      baseURL: entry.baseURL,
+      apiKey: entry.APIKey,
+    });
+  } else {
+    provider = new OpenAIModelProvider({
+      baseURL: entry.baseURL,
+      apiKey: entry.APIKey,
+    });
+  }
 
   const model = new Model(entry.name, provider, {
     max_tokens: 16 * 1024,
@@ -59,16 +69,23 @@ if (args.length > 0) {
     "~/.helixent/skills",
   ];
 
+  const settingsLoader = new SettingsLoader();
+  const settingsWriter = new SettingsWriter(settingsLoader);
   const agent = await createCodingAgent({
     model,
     skillsDirs,
     askUser: globalApprovalManager.askUser,
+    askUserQuestion: globalAskUserQuestionManager.askUserQuestion,
+    approvalPersistence: {
+      loadAllowList: (cwd) => settingsLoader.loadAllowList(cwd),
+      persistAllowedTool: (cwd, toolName) => settingsWriter.appendAllowedTool(cwd, toolName),
+    },
   });
   const commands: SlashCommand[] = await loadAvailableCommands(skillsDirs);
 
   render(
     <AgentLoopProvider agent={agent}>
-      <App commands={commands} />
+      <App commands={commands} supportProjectWideAllow />
     </AgentLoopProvider>,
     { patchConsole: false },
   );

@@ -1,6 +1,7 @@
 import { Box, render, Text, useInput } from "ink";
 
 import type { HelixentConfig } from "@/cli/config";
+import { UserAbortError } from "@/cli/errors";
 
 import { currentTheme } from "../tui/themes";
 
@@ -32,7 +33,7 @@ function WelcomeScreen({ onContinue, onAbort }: { onContinue: () => void; onAbor
 }
 
 function showWelcomeScreen(): Promise<void> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const instance = render(
       <WelcomeScreen
         onContinue={() => {
@@ -41,7 +42,7 @@ function showWelcomeScreen(): Promise<void> {
         }}
         onAbort={() => {
           instance.unmount();
-          process.exit(1);
+          reject(new UserAbortError("Setup aborted."));
         }}
       />,
     );

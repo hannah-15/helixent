@@ -10,6 +10,7 @@ import {
   loadConfig,
   saveConfig,
 } from "@/cli/config";
+import { CliError, ExitCode } from "@/cli/errors";
 
 import { runFirstRunWizard } from "./first-run-wizard";
 
@@ -54,7 +55,11 @@ export async function validateIntegrity(): Promise<void> {
     saveConfig(config);
     console.info(`\n\nHelixent setup completed. Config saved to: ${getConfigFilePath()}\n\n`);
   } catch (err) {
-    console.error(err);
-    process.exit(1);
+    // Let CliError (including UserAbortError) propagate to the top-level handler.
+    if (err instanceof CliError) throw err;
+    throw new CliError(
+      `First-run setup failed: ${err instanceof Error ? err.message : String(err)}`,
+      ExitCode.ConfigInvalid,
+    );
   }
 }

@@ -3,6 +3,7 @@ import TextInput from "ink-text-input";
 import { useState } from "react";
 
 import type { ModelEntry } from "@/cli/config";
+import { UserAbortError } from "@/cli/errors";
 
 import { MODEL_PROVIDERS } from "../model-providers";
 import { currentTheme } from "../tui/themes";
@@ -198,7 +199,7 @@ function ModelWizard({ onComplete, onAbort }: ModelWizardProps) {
 }
 
 export function runModelWizard(): Promise<ModelEntry> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const instance = render(
       <ModelWizard
         onComplete={(entry) => {
@@ -207,7 +208,7 @@ export function runModelWizard(): Promise<ModelEntry> {
         }}
         onAbort={() => {
           instance.unmount();
-          process.exit(1);
+          reject(new UserAbortError("Model setup aborted."));
         }}
       />,
     );

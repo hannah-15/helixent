@@ -6,6 +6,7 @@ import { render } from "ink";
 import { validateIntegrity } from "@/cli/bootstrap";
 import { registerCommands } from "@/cli/commands";
 import { loadConfig } from "@/cli/config";
+import { CliError, ExitCode, runCli } from "@/cli/errors";
 import { SettingsLoader, SettingsWriter } from "@/cli/settings";
 import { createCodingAgent, globalApprovalManager, globalAskUserQuestionManager } from "@/coding";
 import { AnthropicModelProvider } from "@/community/anthropic";
@@ -28,9 +29,12 @@ registerCommands(program);
 
 const args = process.argv.slice(2);
 
-if (args.length > 0) {
-  await program.parseAsync(process.argv);
-} else {
+await runCli(async () => {
+  if (args.length > 0) {
+    await program.parseAsync(process.argv);
+    return;
+  }
+
   console.info();
   await validateIntegrity();
 
@@ -38,7 +42,10 @@ if (args.length > 0) {
   const defaultModelName = config.defaultModel ?? config.models[0]?.name;
   const entry = defaultModelName ? config.models.find((m) => m.name === defaultModelName) : undefined;
   if (!entry) {
-    throw new Error("No models configured. Run `helixent config model add` to add one.");
+    throw new CliError(
+      "No models configured. Run `helixent config model add` to add one.",
+      ExitCode.ConfigMissing,
+    );
   }
 
   let provider: ModelProvider;
@@ -89,4 +96,4 @@ if (args.length > 0) {
     </AgentLoopProvider>,
     { patchConsole: false },
   );
-}
+});

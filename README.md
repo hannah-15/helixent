@@ -27,6 +27,11 @@ https://github.com/user-attachments/assets/4ad89f14-e338-43e4-82ce-91cb83d58be2
   - [Add a New Model](#add-a-new-model)
   - [Remove a Model](#remove-a-model)
   - [Set the Default Model](#set-the-default-model)
+- [Non-Interactive Run](#non-interactive-run)
+  - [Pass the Prompt as an Argument](#pass-the-prompt-as-an-argument)
+  - [Pipe the Prompt via Stdin](#pipe-the-prompt-via-stdin)
+  - [Exit Codes](#exit-codes)
+  - [Notes](#notes)
 - [How to Contribute](#how-to-contribute)
   - [Develop & Build from Source](#develop-build-from-source)
     - [1. Install Dependencies](#1-install-dependencies)
@@ -136,6 +141,48 @@ Or select from the list of configured models:
 ```bash
 helixent config model set-default
 ```
+
+---
+
+## Non-Interactive Run
+
+`helixent run` runs the coding agent on a single prompt **without** the TUI, prints the agent's final reply to stdout, and exits. It is designed to be called from scripts or by another agent — no terminal, no prompts, no approval dialogs.
+
+### Pass the Prompt as an Argument
+
+```bash
+helixent run "list the files in src/foundation"
+```
+
+### Pipe the Prompt via Stdin
+
+When stdin is not a TTY (e.g. piped or redirected), the prompt is read from stdin automatically:
+
+```bash
+echo "summarize AGENTS.md" | helixent run
+helixent run < prompt.txt
+```
+
+You can also pass `-` explicitly to force reading from stdin:
+
+```bash
+cat prompt.txt | helixent run -
+```
+
+### Exit Codes
+
+| Code | Meaning |
+|---|---|
+| `0` | Success — final assistant text was written to stdout |
+| `1` | Runtime error (model failure, tool failure, etc.) — message on stderr |
+| `2` | User/config error (no prompt provided, no models configured) |
+
+### Notes
+
+- The runner uses the **default model** from `~/.helixent/config.yaml`. Configure one with `helixent config model add` first.
+- There is **no approval prompt**: because the caller can't answer one, the approval middleware is omitted and tool calls execute unattended. Treat `helixent run` like any other shell command — only invoke it on prompts you trust.
+- The `ask_user_question` tool is **not available** in this mode for the same reason.
+- Only the agent's final natural-language reply is printed; intermediate tool calls and thinking are suppressed.
 
 ---
 
